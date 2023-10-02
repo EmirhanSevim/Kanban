@@ -12,18 +12,21 @@
         <div class="card" v-for="(cardItem, cardIndex) in item.kartItems" :key="cardIndex">
           {{ cardItem.baslik }}
         </div>
+
         <div class="ekle-button-container">
-          <input v-model="kartAdi" type="text" />
-          <button @click="ekleKart(kartAdi)" class="ekle-button">+ Kart Ekle</button>
+          <input v-model="panoList[index].yeniKartAdi" type="text" />
+          <button class="ekle-button" @click="ekleKart(item.id, panoList[index].yeniKartAdi)">Kart Ekle</button>
         </div>
       </div>
-      <div class="ekle-board-container">
-        <input v-model="listeAdi" type="text" />
-        <button @click="ekleListe(listeAdi)" class="ekle-board">+ Liste Ekle</button>
+
+      <div class="eklelistinput">
+        <input class="" v-model="listeAdi" type="text" />
+        <button class="ekle-board" @click="ekleListe">+ Liste Ekle</button>
       </div>
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { ref, onMounted, defineComponent } from 'vue';
 import axios from 'axios';
@@ -35,14 +38,18 @@ export default defineComponent({
     const listIndex = ref(0);
     const listeAdi = ref('');
     const kartAdi = ref('');
+    const kart = ref('');
 
     interface kartAdi {
-      kartItems: { baslik: string }[]; // kartItems özelliği tanımlandı
+      kartItems: { baslik: string }[];
     }
+
+    const logKartAdi = () => {
+      console.log('Kart Adı:', this.yeniKartAdi);
+    };
 
     onMounted(() => {
       axios.get('https://localhost:44355/api/app/pano-app-services').then((response2) => {
-        console.log('response2 :>> ', response2);
         boardList.value = response2.data || [];
       });
 
@@ -58,31 +65,43 @@ export default defineComponent({
         });
     });
 
+    const ekleListe = () => {
+      if (listeAdi.value.trim() !== '') {
+        const yeniListe = {
+          listBaslik: listeAdi.value,
+          panoItemId: '3a0de902-d95b-503d-1ff6-bc67ae0de648', // Tek board'umuz var, burası sabit kalsın
+        };
+
+        axios
+          .post('https://localhost:44355/api/app/list-app-services', yeniListe)
+          .then((response) => {
+            console.log('Yeni liste başarıyla eklendi:', response.data);
+            listeAdi.value = '';
+          })
+          .catch((error) => {
+            console.error('Yeni liste eklerken hata:', error);
+          });
+      } else {
+        console.warn('Liste adı boş olamaz.');
+      }
+    };
+
     const logBaslik = (baslik: string) => {
       console.log('Tıklanan Başlık:', baslik);
     };
 
-    const ekleKart = (kartAdi: string) => {
-      const yeniListe = {
-        listBaslik: 'Yeni Liste',
-        kartItems: [],
-      };
-      item.kartItems.push(kartAdi);
-    };
-
-    const ekleListe = (param: string) => {
-      const yeniListe = {
-        listBaslik: param,
-        panoItemId: '3a0de902-d95b-503d-1ff6-bc67ae0de648', //tek boardımız var burası sabit kalsın
+    const ekleKart = (id, yeniKartAdi) => {
+      const yeniKart = {
+        baslik: yeniKartAdi,
       };
 
       axios
-        .post('https://localhost:44355/api/app/list-app-services', yeniListe)
+        .post('https://localhost:44355/api/app/kart-item-detay-app-services/', { listItemId: id, baslik: yeniKartAdi })
         .then((response) => {
-          console.log('response ', response);
+          console.log('Veri başarıyla post edildi:', response.data);
         })
         .catch((error) => {
-          console.error('Yeni board eklerken hata:', error);
+          console.error('Veri post edilirken hata oluştu:', error);
         });
     };
 
@@ -96,17 +115,23 @@ export default defineComponent({
       ekleKart,
       listeAdi,
       kartAdi,
-      // kartAdi,
+      logKartAdi,
+      kart,
     };
   },
+
   methods: {
     updatePanoName(boardItem) {
       console.log('boardItem :>> ', boardItem);
-      console.log('board Basşlık', boardItem.baslik);
       axios.put(`https://localhost:44355/api/app/pano-app-services/${boardItem.id}`, boardItem).then((update_board_response) => {
         console.log('update_board_response :>> ', update_board_response);
       });
     },
+  },
+  data() {
+    return {
+      yeniKartAdi: '',
+    };
   },
 });
 </script>
@@ -154,7 +179,7 @@ export default defineComponent({
 
 .list {
   margin: 10px;
-  padding: 50px;
+  padding: 45px;
   border: 1px solid rgb(255, 255, 255);
   border-radius: 10px;
   width: 200px;
@@ -166,7 +191,7 @@ export default defineComponent({
   background-color: #8f8f8f5d;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.788);
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.1s ease;
 }
 
 .card:hover {
@@ -174,11 +199,12 @@ export default defineComponent({
 }
 
 body {
-  background: linear-gradient(135deg, rgba(57, 221, 106, 0.767), rgba(16, 204, 141, 0.664), rgba(9, 64, 146, 0.685), rgba(12, 48, 207, 0.473));
-  background-size: 400% 400%;
-  animation: gradientAnimation 5s infinite;
+  /* background: linear-gradient(135deg, rgba(57, 221, 106, 0.767), rgba(16, 204, 141, 0.664), rgba(9, 64, 146, 0.685), rgba(12, 48, 207, 0.473)); */
+  /* background-size: 400% 400%; */
+  background-color: #ac7f7f;
+  animation: gradientAnimation 1s infinite;
 }
-
+/*
 @keyframes gradientAnimation {
   0% {
     background-position: 300% 50%;
@@ -188,8 +214,8 @@ body {
   }
   100% {
     background-position: 100% 300%;
-  }
-}
+  } */
+/* } */
 
 .baslikinput {
   margin-top: 2px;
@@ -204,6 +230,18 @@ body {
   cursor: pointer;
   transition: background-color 1s ease;
   font-size: 20px;
+}
+
+.eklelistinput {
+  margin-top: 2px;
+  width: 222px;
+  margin-right: 40px;
+  height: 20px;
+  padding: 3px;
+  border-radius: 3px;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background-color 1s ease;
 }
 
 input[type='text'] {
@@ -244,6 +282,7 @@ input[type='text']:hover {
 
 .ekle-board-container {
   display: block;
+  margin-right: 20px;
   place-items: inherit;
   margin-top: 195px;
 }
