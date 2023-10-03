@@ -1,27 +1,44 @@
 <template>
   <div>
-    <nav class="navbar">
-      <div class="navbar-title" v-for="boardItem in boardList" :key="boardItem.id">
-        <input class="baslikinput" type="text" v-model="boardItem.baslik" @input="updatePageTitle" @blur="updatePanoName(boardItem)" />
+    <nav class="bg-gray-400 p-2.5 flex items-center">
+      <div class="text-xl" v-for="boardItem in boardList" :key="boardItem.id">
+        <input
+          class="my-1 w-full text-xl font-mono w-72 border-none outline-none bg-transparent h-1 p-0.5 rounded-sm cursor-pointer transition-colors text-sm"
+          type="text"
+          v-model="boardItem.baslik"
+          @input="updatePageTitle"
+          @blur="updatePanoName(boardItem)"
+        />
       </div>
     </nav>
-
-    <div class="board">
-      <div class="list" v-for="(item, index) in panoList" :key="index">
-        <h3 @click="logBaslik(item.listBaslik)">{{ item.listBaslik }}</h3>
-        <div class="card" v-for="(cardItem, cardIndex) in item.kartItems" :key="cardIndex">
+    <div class="flex flex-wrap">
+      <div
+        class="max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-white"
+        v-for="(item, index) in panoList"
+        :key="index"
+      >
+        <h3 @click="logBaslik(item.listBaslik)" class="text-xl">{{ item.listBaslik }}</h3>
+        <div
+          class="mt-2 p-1 bg-gray-200 shadow-sm rounded-lg transition-colors hover:bg-orange-300"
+          v-for="(cardItem, cardIndex) in item.kartItems"
+          :key="cardIndex"
+        >
           {{ cardItem.baslik }}
         </div>
-
-        <div class="ekle-button-container">
-          <input v-model="panoList[index].yeniKartAdi" type="text" />
-          <button class="ekle-button" @click="ekleKart(item.id, panoList[index].yeniKartAdi)">Kart Ekle</button>
+        <div class="block place-items-start mt-2 ml-3">
+          <input v-model="panoList[index].yeniKartAdi" type="text" class="w-56 p-11 border rounded-lg hover:bg-white" />
+          <button
+            @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
+            class="bg-slate-500 text-white mt-1 px-4 rounded-md cursor-pointer hover:bg-slate-400"
+          >
+            Kart Ekle
+          </button>
         </div>
       </div>
 
-      <div class="eklelistinput">
-        <input class="" v-model="listeAdi" type="text" />
-        <button class="ekle-board" @click="ekleListe">+ Liste Ekle</button>
+      <div class="block place-items-end mt-auto ml-6 pt-6">
+        <input class="m-0.5 w-56 mr-4 h-5 p-1 rounded-sm items-start cursor-pointer transition-colors" v-model="listeAdi" type="text" />
+        <button @click="ekleListe" class="bg-amber-200 mr-3 p-1 content-center rounded-md cursor-pointer">+ Liste Ekle</button>
       </div>
     </div>
   </div>
@@ -39,6 +56,8 @@ export default defineComponent({
     const listeAdi = ref('');
     const kartAdi = ref('');
     const kart = ref('');
+    // const yeniKartAdi = ref('');
+    const yeniKartAdi = ref('');
 
     interface kartAdi {
       kartItems: { baslik: string }[];
@@ -82,7 +101,7 @@ export default defineComponent({
             console.error('Yeni liste eklerken hata:', error);
           });
       } else {
-        console.warn('Liste adı boş olamaz.');
+        console.warn('Liste adı boş olamaz.'); // Input alanı boşsa uyarı ver
       }
     };
 
@@ -137,15 +156,6 @@ export default defineComponent({
 </script>
 
 <style>
-.navbar {
-  background-color: #5c58586b;
-  /* color: #fff; */
-  padding: 10px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-}
-
 .navbar-title {
   font-size: 18px;
   margin: 0;
@@ -189,7 +199,7 @@ export default defineComponent({
   margin-top: 10px;
   padding: 5px;
   background-color: #8f8f8f5d;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.788);
+  box-shadow: 0px 2px 4px rgba(255, 255, 255, 0.788);
   border-radius: 8px;
   transition: background-color 0.1s ease;
 }
