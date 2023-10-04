@@ -22,6 +22,7 @@
           class="mt-2 p-1 bg-gray-200 shadow-sm rounded-lg transition-colors hover:bg-orange-300"
           v-for="(cardItem, cardIndex) in item.kartItems"
           :key="cardIndex"
+          @click="openModal(cardItem)"
         >
           {{ cardItem.baslik }}
         </div>
@@ -42,13 +43,19 @@
       </div>
     </div>
   </div>
+  <CardModal :isModalOpen="isModalOpen" :editedCard="editedCard" @close="closeModal" @save="saveCardChanges" />
 </template>
 
 <script lang="ts">
 import { ref, onMounted, defineComponent } from 'vue';
 import axios from 'axios';
+import CardModal from './CardModal.vue';
 
 export default defineComponent({
+  props: {
+    editedCard: Object,
+  },
+
   setup() {
     const panoList = ref([]);
     const boardList = ref([]);
@@ -56,7 +63,13 @@ export default defineComponent({
     const listeAdi = ref('');
     const kartAdi = ref('');
     const kart = ref('');
-    // const yeniKartAdi = ref('');
+    const editedCard = ref({
+      id: '',
+      baslik: '',
+      description: '',
+      listItemId: '',
+    });
+    const isModalOpen = ref(false);
     const yeniKartAdi = ref('');
 
     interface kartAdi {
@@ -101,7 +114,7 @@ export default defineComponent({
             console.error('Yeni liste eklerken hata:', error);
           });
       } else {
-        console.warn('Liste adı boş olamaz.'); // Input alanı boşsa uyarı ver
+        alert('Liste adı boş olamaz.');
       }
     };
 
@@ -113,9 +126,8 @@ export default defineComponent({
       const yeniKart = {
         baslik: yeniKartAdi,
       };
-
       axios
-        .post('https://localhost:44355/api/app/kart-item-detay-app-services/', { listItemId: id, baslik: yeniKartAdi })
+        .post('https://localhost:44355/api/app/kart-item-detay-app-services/', { listItemId: id, baslik: yeniKart.baslik })
         .then((response) => {
           console.log('Veri başarıyla post edildi:', response.data);
         })
@@ -136,6 +148,8 @@ export default defineComponent({
       kartAdi,
       logKartAdi,
       kart,
+      isModalOpen,
+      editedCard,
     };
   },
 
@@ -146,11 +160,35 @@ export default defineComponent({
         console.log('update_board_response :>> ', update_board_response);
       });
     },
+    saveChanges() {
+      // Değişiklikleri kaydetme işlemi
+      this.$emit('save', this.editedCard);
+      this.closeModal();
+    },
+    openModal(card) {
+      // Kart düzenleme modalını aç
+      console.log('openModal Card-->', card);
+      this.editedCard = card;
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
+    },
+    saveCardChanges(updatedCard) {
+      // Kartın değiştirilmiş bilgilerini kaydetme işlemi
+      // updatedCard içinde güncellenmiş başlık ve açıklama bulunur
+      // Bu verileri uygun bir API çağrısı veya başka bir kaydetme yöntemi kullanarak saklayabilirsiniz.
+      // Daha sonra kartları yeniden yükleyebilir veya güncellemeleri yerinde yapabilirsiniz.
+      console.log('Updated Card:', updatedCard);
+    },
   },
   data() {
     return {
       yeniKartAdi: '',
     };
+  },
+  components: {
+    CardModal,
   },
 });
 </script>
