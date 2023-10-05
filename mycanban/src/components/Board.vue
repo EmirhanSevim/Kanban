@@ -12,8 +12,6 @@
       </div>
     </nav>
     <div class="flex flex-wrap">
-      <!-- <DxScrollView class="scrollable-board" direction="horizontal" show-scrollbar="always">
-        <DxSortable class="sortable-lists" item-orientation="horizontal" handle=".list-title" @reorder="onListReorder"> -->
       <div
         class="bg-white max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-black"
         v-for="(item, index) in panoList"
@@ -73,7 +71,7 @@ export default defineComponent({
   components: {
     DxScrollView,
     DxSortable,
-    CardModal, //bnuna niye kızmıyo :Dajasljkhd
+    CardModal,
   },
   props: {
     editedCard: Object,
@@ -159,14 +157,6 @@ export default defineComponent({
         });
     };
 
-    // const onTaskDragStart = (e: any) => {
-    //   e.itemData = e.fromData[e.fromIndex];
-    // };
-    // const onTaskDrop = (e: any) => {
-    //   e.fromData.splice(e.fromIndex, 1);
-    //   e.toData.splice(e.toIndex, 0, e.itemData);
-    // };
-
     return {
       panoList,
       boardList,
@@ -192,13 +182,10 @@ export default defineComponent({
       });
     },
     saveChanges() {
-      // Değişiklikleri kaydetme işlemi
       this.$emit('save', this.editedCard);
       this.closeModal();
     },
     openModal(card: any) {
-      // Kart düzenleme modalını aç
-      // console.log('openModal Card-->', card);
       this.editedCard = card;
       this.isModalOpen = true;
     },
@@ -206,14 +193,9 @@ export default defineComponent({
       this.isModalOpen = false;
     },
     saveCardChanges(updatedCard: any) {
-      // Kartın değiştirilmiş bilgilerini kaydetme işlemi
-      // updatedCard içinde güncellenmiş başlık ve açıklama bulunur
-      // Bu verileri uygun bir API çağrısı veya başka bir kaydetme yöntemi kullanarak saklayabilirsiniz.
-      // Daha sonra kartları yeniden yükleyebilir veya güncellemeleri yerinde yapabilirsiniz.
       console.log('Updated Card:', updatedCard);
     },
     onListReorder(e: any) {
-      // console.log('onListReorder', e);
       const list = this.lists.splice(e.fromIndex, 1)[0];
       this.lists.splice(e.toIndex, 0, list);
 
@@ -221,7 +203,6 @@ export default defineComponent({
       this.statuses.splice(e.toIndex, 0, status);
     },
     onTaskDragStart(e: any) {
-      // console.log('e', e);
       e.itemData = e.fromData[e.fromIndex];
     },
     onTaskDrop(e: any) {
