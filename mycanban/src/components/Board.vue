@@ -3,7 +3,7 @@
     <nav class="backdrop-blur-md p-5 flex items-center">
       <div class="text-3xl" v-for="boardItem in boardList" :key="boardItem.id">
         <input
-          class="bg-transparent mr-10 font-bold my-3 w-full text-3xl font-mono w-80 border-none outline-none h-40 p-8 rounded-sm cursor-pointer transition-colors"
+          class="bg-transparent mr-10 font-bold my-3 w-full text-3xl font-mono border-none outline-none h-40 p-8 rounded-sm cursor-pointer transition-colors"
           type="text"
           v-model="boardItem.baslik"
           @input="updatePageTitle"
@@ -21,27 +21,27 @@
       >
         <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
 
-        <!-- <DxScrollView class="scrollable-list" show-scrollbar="always"> -->
-        <DxSortable
-          :data="item.kartItems"
-          class="sortable-cards"
-          group="tasksGroup"
-          @drag-start="onTaskDragStart($event)"
-          @reorder="onTaskDrop($event)"
-          @add="onTaskDrop($event)"
-        >
-          <div
-            class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
-            v-for="(cardItem, cardIndex) in item.kartItems"
-            :key="cardIndex"
-            @click="openModal(cardItem)"
+        <DxScrollView class="scrollable-list" show-scrollbar="always">
+          <DxSortable
+            :data="item.kartItems"
+            class="sortable-cards"
+            group="tasksGroup"
+            @drag-start="onTaskDragStart($event)"
+            @reorder="onTaskDrop($event)"
+            @add="onTaskDrop($event)"
           >
-            {{ cardItem.baslik }}
-          </div>
-        </DxSortable>
-        <!-- </DxScrollView> -->
+            <div
+              class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
+              v-for="(cardItem, cardIndex) in item.kartItems"
+              :key="cardIndex"
+              @click="openModal(cardItem)"
+            >
+              {{ cardItem.baslik }}
+            </div>
+          </DxSortable>
+        </DxScrollView>
 
-        <div class="block place-items-start mt-2 ml-3 rounded-3xl">
+        <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
           <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
           <button
             @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
@@ -141,11 +141,11 @@ export default defineComponent({
       }
     };
 
-    const logBaslik = (baslik: string) => {
+    const logBaslik = (baslik: any) => {
       console.log('Tıklanan Başlık:', baslik);
     };
 
-    const ekleKart = (id, yeniKartAdi) => {
+    const ekleKart = (id: any, yeniKartAdi: any) => {
       const yeniKart = {
         baslik: yeniKartAdi,
       };
@@ -185,7 +185,7 @@ export default defineComponent({
   },
 
   methods: {
-    updatePanoName(boardItem) {
+    updatePanoName(boardItem: any) {
       console.log('boardItem :>> ', boardItem);
       axios.put(`https://localhost:44355/api/app/pano-app-services/${boardItem.id}`, boardItem).then((update_board_response) => {
         console.log('update_board_response :>> ', update_board_response);
@@ -196,7 +196,7 @@ export default defineComponent({
       this.$emit('save', this.editedCard);
       this.closeModal();
     },
-    openModal(card) {
+    openModal(card: any) {
       // Kart düzenleme modalını aç
       // console.log('openModal Card-->', card);
       this.editedCard = card;
@@ -205,7 +205,7 @@ export default defineComponent({
     closeModal() {
       this.isModalOpen = false;
     },
-    saveCardChanges(updatedCard) {
+    saveCardChanges(updatedCard: any) {
       // Kartın değiştirilmiş bilgilerini kaydetme işlemi
       // updatedCard içinde güncellenmiş başlık ve açıklama bulunur
       // Bu verileri uygun bir API çağrısı veya başka bir kaydetme yöntemi kullanarak saklayabilirsiniz.
@@ -228,7 +228,7 @@ export default defineComponent({
       e.fromData.splice(e.fromIndex, 1);
       e.toData.splice(e.toIndex, 0, e.itemData);
     },
-    getPriorityClass(task) {
+    getPriorityClass(task: any) {
       return `priority-${task.Task_Priority}`;
     },
   },
@@ -279,9 +279,9 @@ export default defineComponent({
   width: 260px;
 }
 
-.sortable-cards {
+/* .sortable-cards {
   min-height: 380px;
-}
+} */
 
 .card {
   position: relative;
@@ -466,11 +466,12 @@ input[type='text']:hover {
 }
 
 .ekle-button-container {
-  display: block;
-  place-items: initial;
-  margin-top: 30px;
-  margin-left: auto;
-  margin-right: auto;
+  position: sticky; /* Yapışık pozisyon */
+  top: 0; /* Üst kenara yapışık */
+  background-color: white; /* Arka plan rengi */
+  z-index: 1; /* Görünürlük sıralaması */
+  padding: 10px; /* Kenar boşluğu ekleyin */
+  margin-bottom: 10px; /* Alt kısma boşluk ekleyin */
 }
 
 .ekle-button {
@@ -488,10 +489,12 @@ input[type='text']:hover {
 }
 
 .ekle-board-container {
-  display: block;
-  margin-right: 20px;
-  place-items: inherit;
-  margin-top: 195px;
+  position: sticky; /* Yapışık pozisyon */
+  top: 0; /* Üst kenara yapışık */
+  background-color: white; /* Arka plan rengi */
+  z-index: 1; /* Görünürlük sıralaması */
+  padding: 10px; /* Kenar boşluğu ekleyin */
+  margin-bottom: 10px; /* Alt kısma boşluk ekleyin */
 }
 
 .ekle-board {
