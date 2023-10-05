@@ -1,9 +1,9 @@
 <template>
   <div>
-    <nav class="bg-gray-400 p-2.5 flex items-center">
-      <div class="text-xl" v-for="boardItem in boardList" :key="boardItem.id">
+    <nav class="backdrop-blur-md p-5 flex items-center">
+      <div class="text-3xl" v-for="boardItem in boardList" :key="boardItem.id">
         <input
-          class="my-1 w-full text-xl font-mono w-72 border-none outline-none bg-transparent h-1 p-0.5 rounded-sm cursor-pointer transition-colors text-sm"
+          class="bg-transparent mr-10 font-bold my-3 w-full text-3xl font-mono w-80 border-none outline-none h-40 p-8 rounded-sm cursor-pointer transition-colors"
           type="text"
           v-model="boardItem.baslik"
           @input="updatePageTitle"
@@ -12,25 +12,40 @@
       </div>
     </nav>
     <div class="flex flex-wrap">
+      <!-- <DxScrollView class="scrollable-board" direction="horizontal" show-scrollbar="always">
+        <DxSortable class="sortable-lists" item-orientation="horizontal" handle=".list-title" @reorder="onListReorder"> -->
       <div
-        class="max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-white"
+        class="bg-white max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-black"
         v-for="(item, index) in panoList"
         :key="index"
       >
-        <h3 @click="logBaslik(item.listBaslik)" class="text-xl">{{ item.listBaslik }}</h3>
-        <div
-          class="mt-2 p-1 bg-gray-200 shadow-sm rounded-lg transition-colors hover:bg-orange-300"
-          v-for="(cardItem, cardIndex) in item.kartItems"
-          :key="cardIndex"
-          @click="openModal(cardItem)"
+        <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
+
+        <!-- <DxScrollView class="scrollable-list" show-scrollbar="always"> -->
+        <DxSortable
+          :data="item.kartItems"
+          class="sortable-cards"
+          group="tasksGroup"
+          @drag-start="onTaskDragStart($event)"
+          @reorder="onTaskDrop($event)"
+          @add="onTaskDrop($event)"
         >
-          {{ cardItem.baslik }}
-        </div>
-        <div class="block place-items-start mt-2 ml-3">
-          <input v-model="panoList[index].yeniKartAdi" type="text" class="w-56 p-11 border rounded-lg hover:bg-white" />
+          <div
+            class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
+            v-for="(cardItem, cardIndex) in item.kartItems"
+            :key="cardIndex"
+            @click="openModal(cardItem)"
+          >
+            {{ cardItem.baslik }}
+          </div>
+        </DxSortable>
+        <!-- </DxScrollView> -->
+
+        <div class="block place-items-start mt-2 ml-3 rounded-3xl">
+          <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
           <button
             @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
-            class="bg-slate-500 text-white mt-1 px-4 rounded-md cursor-pointer hover:bg-slate-400"
+            class="bg-blue-400 font-bold text-black mt-1 p-1 mr-auto cursor-pointer hover:bg-slate-300"
           >
             Kart Ekle
           </button>
@@ -38,11 +53,12 @@
       </div>
 
       <div class="block place-items-end mt-auto ml-6 pt-6">
-        <input class="m-0.5 w-56 mr-4 h-5 p-1 rounded-sm items-start cursor-pointer transition-colors" v-model="listeAdi" type="text" />
-        <button @click="ekleListe" class="bg-amber-200 mr-3 p-1 content-center rounded-md cursor-pointer">+ Liste Ekle</button>
+        <input class="eklelistinput" v-model="listeAdi" type="text" />
+        <button @click="ekleListe" class="font-bold bg-slate-500 ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
       </div>
     </div>
   </div>
+
   <CardModal :isModalOpen="isModalOpen" :editedCard="editedCard" @close="closeModal" @save="saveCardChanges" />
 </template>
 
@@ -50,8 +66,15 @@
 import { ref, onMounted, defineComponent } from 'vue';
 import axios from 'axios';
 import CardModal from './CardModal.vue';
+import { DxScrollView } from 'devextreme-vue/scroll-view';
+import { DxSortable } from 'devextreme-vue/sortable';
 
 export default defineComponent({
+  components: {
+    DxScrollView,
+    DxSortable,
+    CardModal, //bnuna niye kızmıyo :Dajasljkhd
+  },
   props: {
     editedCard: Object,
   },
@@ -136,6 +159,14 @@ export default defineComponent({
         });
     };
 
+    // const onTaskDragStart = (e: any) => {
+    //   e.itemData = e.fromData[e.fromIndex];
+    // };
+    // const onTaskDrop = (e: any) => {
+    //   e.fromData.splice(e.fromIndex, 1);
+    //   e.toData.splice(e.toIndex, 0, e.itemData);
+    // };
+
     return {
       panoList,
       boardList,
@@ -167,7 +198,7 @@ export default defineComponent({
     },
     openModal(card) {
       // Kart düzenleme modalını aç
-      console.log('openModal Card-->', card);
+      // console.log('openModal Card-->', card);
       this.editedCard = card;
       this.isModalOpen = true;
     },
@@ -181,19 +212,143 @@ export default defineComponent({
       // Daha sonra kartları yeniden yükleyebilir veya güncellemeleri yerinde yapabilirsiniz.
       console.log('Updated Card:', updatedCard);
     },
+    onListReorder(e: any) {
+      // console.log('onListReorder', e);
+      const list = this.lists.splice(e.fromIndex, 1)[0];
+      this.lists.splice(e.toIndex, 0, list);
+
+      const status = this.statuses.splice(e.fromIndex, 1)[0];
+      this.statuses.splice(e.toIndex, 0, status);
+    },
+    onTaskDragStart(e: any) {
+      // console.log('e', e);
+      e.itemData = e.fromData[e.fromIndex];
+    },
+    onTaskDrop(e: any) {
+      e.fromData.splice(e.fromIndex, 1);
+      e.toData.splice(e.toIndex, 0, e.itemData);
+    },
+    getPriorityClass(task) {
+      return `priority-${task.Task_Priority}`;
+    },
   },
+
   data() {
     return {
       yeniKartAdi: '',
     };
   },
-  components: {
-    CardModal,
-  },
 });
 </script>
 
 <style>
+.block.place-items-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Kart ekle düğmesini sabitlemek için düğme konteynerini stilleyin */
+.block.place-items-start .ml-3 {
+  margin-top: auto; /* Listenin altına sabitler */
+}
+#kanban {
+  white-space: nowrap;
+}
+
+.list {
+  border-radius: 8px;
+  margin: 5px;
+  background-color: rgba(192, 192, 192, 0.4);
+  display: inline-block;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.list-title {
+  font-size: 16px;
+  padding: 10px;
+  padding-left: 30px;
+  margin-bottom: -10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.scrollable-list {
+  height: 400px;
+  width: 260px;
+}
+
+.sortable-cards {
+  min-height: 380px;
+}
+
+.card {
+  position: relative;
+  background-color: white;
+  box-sizing: border-box;
+  width: 230px;
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+}
+
+.card-subject {
+  padding-bottom: 10px;
+}
+
+.card-assignee {
+  opacity: 0.6;
+}
+
+.card-priority {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 5px;
+  width: 5px;
+  border-radius: 2px;
+  background: #86c285;
+}
+
+.priority-1 {
+  background: #adadad;
+}
+
+.priority-2 {
+  background: #86c285;
+}
+
+.priority-3 {
+  background: #edc578;
+}
+
+.priority-4 {
+  background: #ef7d59;
+}
+
+.dx-sortable {
+  display: block;
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 .navbar-title {
   font-size: 18px;
   margin: 0;
@@ -249,8 +404,8 @@ export default defineComponent({
 body {
   /* background: linear-gradient(135deg, rgba(57, 221, 106, 0.767), rgba(16, 204, 141, 0.664), rgba(9, 64, 146, 0.685), rgba(12, 48, 207, 0.473)); */
   /* background-size: 400% 400%; */
-  background-color: #ac7f7f;
-  animation: gradientAnimation 1s infinite;
+
+  background-image: url('arkaplan.jpg');
 }
 /*
 @keyframes gradientAnimation {
@@ -282,7 +437,9 @@ body {
 
 .eklelistinput {
   margin-top: 2px;
+  color: black;
   width: 222px;
+  background-color: white;
   margin-right: 40px;
   height: 20px;
   padding: 3px;
@@ -294,8 +451,8 @@ body {
 
 input[type='text'] {
   margin-top: 2px;
-  width: 222px;
-  margin-left: -10px;
+  width: 260px;
+  margin-left: -15px;
   height: 20px;
   padding: 3px;
   border-radius: 3px;
@@ -312,13 +469,15 @@ input[type='text']:hover {
   display: block;
   place-items: initial;
   margin-top: 30px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ekle-button {
   background-color: #ccc8e093;
   margin-left: -10px;
   margin-top: 5px;
-  color: #fff;
+
   padding: 5px 20px;
   border-radius: 5px;
   cursor: pointer;

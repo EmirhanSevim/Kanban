@@ -1,11 +1,11 @@
 <template>
   <div class="modal" v-if="isModalOpen">
     <div class="modal-content">
-      <h3>Edit Card</h3>
+      <h2>Kart Düzenle</h2>
       <input v-model="editedCard.baslik" type="text" placeholder="Card Title" />
       <textarea v-model="editedCard.description" placeholder="Card Description"></textarea>
-      <button @click="saveChanges(editedCard)">Save</button>
-      <button @click="closeModal">Close</button>
+      <button @click="saveChanges(editedCard)">Kaydet</button>
+      <button @click="closeModal">Kapat</button>
     </div>
   </div>
 </template>
@@ -38,6 +38,8 @@ const saveChanges = async (card) => {
 
 <style scoped>
 .modal {
+  color: black;
+  font-weight: bold;
   position: fixed;
   top: 0;
   left: 0;
@@ -54,7 +56,7 @@ const saveChanges = async (card) => {
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
   max-width: 400px;
   width: 100%;
   text-align: center;
@@ -62,9 +64,11 @@ const saveChanges = async (card) => {
 
 input[type='text'],
 textarea {
+  color: black;
   width: 100%;
   margin: 10px 0;
   padding: 8px;
+  background-color: rgb(226 232 240);
   border: 1px solid #ccc;
   border-radius: 4px;
 }
