@@ -1,7 +1,7 @@
 <template>
   <div>
     <nav class="backdrop-blur-md p-5 flex items-center">
-      <div class="text-3xl" v-for="boardItem in boardList" :key="boardItem.id">
+      <div class="" v-for="boardItem in boardList" :key="boardItem.id">
         <input
           class="bg-transparent mr-10 font-bold my-3 w-full text-3xl font-mono border-none outline-none h-40 p-8 rounded-sm cursor-pointer transition-colors"
           type="text"
@@ -11,15 +11,25 @@
         />
       </div>
     </nav>
-    <div class="flex flex-wrap">
-      <div
-        class="bg-white max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-black"
-        v-for="(item, index) in panoList"
-        :key="index"
-      >
-        <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
 
-        <DxScrollView class="scrollable-list" show-scrollbar="always">
+    <div class="flex flex-wrap">
+      <DxSortable
+        :data="panoList"
+        class="flex"
+        item-orientation="horizontal"
+        group="tasksGroup"
+        @drag-start="onTaskDragStart($event)"
+        @reorder="onTaskDrop($event)"
+        @add="onTaskDrop($event)"
+      >
+        <div
+          class="bg-white max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-black"
+          v-for="(item, index) in panoList"
+          :key="index"
+        >
+          <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
+
+          <!-- <DxScrollView class="scrollable-list" show-scrollbar="always"> -->
           <DxSortable
             :data="item.kartItems"
             class="sortable-cards"
@@ -37,19 +47,19 @@
               {{ cardItem.baslik }}
             </div>
           </DxSortable>
-        </DxScrollView>
+          <!-- </DxScrollView> -->
 
-        <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
-          <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
-          <button
-            @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
-            class="bg-blue-400 font-bold text-black mt-1 p-1 mr-auto cursor-pointer hover:bg-slate-300"
-          >
-            Kart Ekle
-          </button>
+          <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
+            <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
+            <button
+              @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
+              class="bg-blue-400 font-bold text-black mt-1 p-1 mr-auto cursor-pointer hover:bg-slate-300"
+            >
+              Kart Ekle
+            </button>
+          </div>
         </div>
-      </div>
-
+      </DxSortable>
       <div class="block place-items-end mt-auto ml-6 pt-6">
         <input class="eklelistinput" v-model="listeAdi" type="text" />
         <button @click="ekleListe" class="font-bold bg-slate-500 ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
@@ -192,6 +202,7 @@ export default defineComponent({
     closeModal() {
       this.isModalOpen = false;
     },
+
     saveCardChanges(updatedCard: any) {
       console.log('Updated Card:', updatedCard);
     },
@@ -202,14 +213,14 @@ export default defineComponent({
       const status = this.statuses.splice(e.fromIndex, 1)[0];
       this.statuses.splice(e.toIndex, 0, status);
     },
-    onTaskDragStart(e: any) {
+    onTaskDragStart(e) {
       e.itemData = e.fromData[e.fromIndex];
     },
-    onTaskDrop(e: any) {
+    onTaskDrop(e) {
       e.fromData.splice(e.fromIndex, 1);
       e.toData.splice(e.toIndex, 0, e.itemData);
     },
-    getPriorityClass(task: any) {
+    getPriorityClass(task) {
       return `priority-${task.Task_Priority}`;
     },
   },
@@ -261,11 +272,11 @@ export default defineComponent({
 }
 
 /* .sortable-cards {
-  min-height: 380px;
-} */
+    min-height: 380px;
+  } */
 
 .card {
-  position: relative;
+  position: absolute;
   background-color: white;
   box-sizing: border-box;
   width: 230px;
@@ -389,16 +400,16 @@ body {
   background-image: url('arkaplan.jpg');
 }
 /*
-@keyframes gradientAnimation {
-  0% {
-    background-position: 300% 50%;
-  }
-  50% {
-    background-position: 50% 100%;
-  }
-  100% {
-    background-position: 100% 300%;
-  } */
+  @keyframes gradientAnimation {
+    0% {
+      background-position: 300% 50%;
+    }
+    50% {
+      background-position: 50% 100%;
+    }
+    100% {
+      background-position: 100% 300%;
+    } */
 /* } */
 
 .baslikinput {
@@ -459,7 +470,6 @@ input[type='text']:hover {
   background-color: #ccc8e093;
   margin-left: -10px;
   margin-top: 5px;
-
   padding: 5px 20px;
   border-radius: 5px;
   cursor: pointer;
