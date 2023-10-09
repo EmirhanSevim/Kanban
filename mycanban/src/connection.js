@@ -8,7 +8,7 @@ const client = new Client({
   host: 'localhost',
   database: 'deneme',
   password: '123',
-  port: 5432, // PostgreSQL varsayılan portu
+  port: 5432,
 });
 
 client

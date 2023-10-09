@@ -15,7 +15,7 @@
     <div class="flex flex-wrap">
       <DxSortable
         :data="panoList"
-        class="flex"
+        class="flex flex-wrap"
         item-orientation="horizontal"
         group="tasksGroup"
         @drag-start="onTaskDragStart($event)"
@@ -29,13 +29,12 @@
         >
           <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
 
-          <!-- <DxScrollView class="scrollable-list" show-scrollbar="always"> -->
           <DxSortable
             :data="item.kartItems"
             class="sortable-cards"
             group="tasksGroup"
             @drag-start="onTaskDragStart($event)"
-            @reorder="onTaskDrop($event)"
+            @reorder="onTaskDropKart($event)"
             @add="onTaskDrop($event)"
           >
             <div
@@ -47,7 +46,6 @@
               {{ cardItem.baslik }}
             </div>
           </DxSortable>
-          <!-- </DxScrollView> -->
 
           <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
             <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
@@ -207,20 +205,74 @@ export default defineComponent({
       console.log('Updated Card:', updatedCard);
     },
     onListReorder(e: any) {
-      const list = this.lists.splice(e.fromIndex, 1)[0];
-      this.lists.splice(e.toIndex, 0, list);
-
-      const status = this.statuses.splice(e.fromIndex, 1)[0];
-      this.statuses.splice(e.toIndex, 0, status);
+      const list = this.panoList.splice(e.fromIndex, 1)[0];
+      this.panoList.splice(e.toIndex, 0, list);
     },
-    onTaskDragStart(e) {
+    onTaskDragStart(e: any) {
       e.itemData = e.fromData[e.fromIndex];
     },
-    onTaskDrop(e) {
+    onTaskDrop(e: any) {
       e.fromData.splice(e.fromIndex, 1);
       e.toData.splice(e.toIndex, 0, e.itemData);
+      const newPosition = e.toIndex + 1;
+      const listId = e.itemData.id;
+      console.log('e.itemData.id :>> ', e.itemData.id);
+      console.log('e.toIndex :>> ', e.toIndex);
+
+      axios
+        .put(`https://localhost:44355/api/app/list-app-services/${listId}/position?newPosition=${newPosition}`)
+        .then((response) => {
+          console.log('List başarıyla post edildi:', response.data);
+        })
+        .catch((error) => {
+          console.error('List pozisyonu güncellenirken hata oluştu:', error);
+        });
     },
-    getPriorityClass(task) {
+
+    onTaskDropKart(e: any) {
+      e.fromData.splice(e.fromIndex, 1);
+      e.toData.splice(e.toIndex, 0, e.itemData);
+      const cartId = e.itemData.id;
+      const newPosition = e.toIndex + 1;
+
+      console.log('Kart pozisyonu güncellendi:', e.itemData.id);
+
+      axios
+        .put(`https://localhost:44355/api/app/kart-item-detay-app-services/${cartId}/position?newPosition=${newPosition}`)
+        .then((response) => {
+          console.log('Kart pozisyonu başarıyla güncellendi:', response.data);
+
+          // Yeni pozisyon hesaplaması için bir dizi oluştur
+          const updatedPositions = e.toData.map((item, index) => ({
+            id: item.id,
+            newPosition: index + 1,
+          }));
+
+          // Kartların pozisyonlarını güncelleme isteklerini dizi içinde topla
+          const updateRequests = updatedPositions.map((position: any) =>
+            axios.put(`https://localhost:44355/api/app/kart-item-detay-app-services/${position.id}/position?newPosition=${position.newPosition}`)
+          );
+
+          // Tüm kart pozisyon güncelleme isteklerini sırayla çalıştır
+          Promise.all(updateRequests)
+            .then((responses) => {
+              console.log('Diğer kartların pozisyonları güncellendi:', responses);
+            })
+            .catch((error) => {
+              console.error('Diğer kartların pozisyonlarını güncelleme hatası:', error);
+            });
+        })
+        .catch((error) => {
+          console.error('Kart pozisyonunu güncelleme hatası:', error);
+        });
+    },
+
+    onListReorderKart(e: any) {
+      const kart = this.panoList.splice(e.fromIndex.position + 1)[0];
+      this.panoList.splice(e.toIndex, 1, kart);
+    },
+
+    getPriorityClass(task: any) {
       return `priority-${task.Task_Priority}`;
     },
   },
@@ -240,10 +292,6 @@ export default defineComponent({
   align-items: flex-start;
 }
 
-/* Kart ekle düğmesini sabitlemek için düğme konteynerini stilleyin */
-.block.place-items-start .ml-3 {
-  margin-top: auto; /* Listenin altına sabitler */
-}
 #kanban {
   white-space: nowrap;
 }
@@ -270,10 +318,6 @@ export default defineComponent({
   height: 400px;
   width: 260px;
 }
-
-/* .sortable-cards {
-    min-height: 380px;
-  } */
 
 .card {
   position: absolute;
@@ -394,23 +438,8 @@ export default defineComponent({
 }
 
 body {
-  /* background: linear-gradient(135deg, rgba(57, 221, 106, 0.767), rgba(16, 204, 141, 0.664), rgba(9, 64, 146, 0.685), rgba(12, 48, 207, 0.473)); */
-  /* background-size: 400% 400%; */
-
   background-image: url('arkaplan.jpg');
 }
-/*
-  @keyframes gradientAnimation {
-    0% {
-      background-position: 300% 50%;
-    }
-    50% {
-      background-position: 50% 100%;
-    }
-    100% {
-      background-position: 100% 300%;
-    } */
-/* } */
 
 .baslikinput {
   margin-top: 2px;
@@ -458,12 +487,12 @@ input[type='text']:hover {
 }
 
 .ekle-button-container {
-  position: sticky; /* Yapışık pozisyon */
-  top: 0; /* Üst kenara yapışık */
-  background-color: white; /* Arka plan rengi */
-  z-index: 1; /* Görünürlük sıralaması */
-  padding: 10px; /* Kenar boşluğu ekleyin */
-  margin-bottom: 10px; /* Alt kısma boşluk ekleyin */
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .ekle-button {
@@ -480,12 +509,12 @@ input[type='text']:hover {
 }
 
 .ekle-board-container {
-  position: sticky; /* Yapışık pozisyon */
-  top: 0; /* Üst kenara yapışık */
-  background-color: white; /* Arka plan rengi */
-  z-index: 1; /* Görünürlük sıralaması */
-  padding: 10px; /* Kenar boşluğu ekleyin */
-  margin-bottom: 10px; /* Alt kısma boşluk ekleyin */
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .ekle-board {

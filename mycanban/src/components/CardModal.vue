@@ -19,20 +19,11 @@ const closeModal = () => {
   emit('close');
 };
 
-const saveChanges = async (card) => {
+const saveChanges = async (card: any) => {
   axios.put(`https://localhost:44355/api/app/kart-item-detay-app-services/${card.id}`, card).then((response) => {
-    //update yaparken hangi kartı update edeceksen onun id sine ihtiyacımız var o lazım ... hmm editedCard işimize yaramaz mı?
     console.log('response :>> ', response);
+    emit('close');
   });
-
-  //   try {
-  //     const response = await axios.post('', editedCard);
-  //     console.log('emirhan :>> ', editedCard);
-  //     console.log('Veri başarıyla kaydedildi', response.data);
-  //     closeModal();
-  //   } catch (error) {
-  //     console.error('Veri kaydetme hatası', error);
-  //   }
 };
 </script>
 
