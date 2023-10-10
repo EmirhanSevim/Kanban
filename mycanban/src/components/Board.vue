@@ -1,9 +1,9 @@
 <template>
   <div>
-    <nav class="backdrop-blur-md p-5 flex items-center">
-      <div class="" v-for="boardItem in boardList" :key="boardItem.id">
+    <nav class="p-5">
+      <div v-for="boardItem in boardList" :key="boardItem.id">
         <input
-          class="bg-transparent mr-10 font-bold my-3 w-full text-3xl font-mono border-none outline-none h-40 p-8 rounded-sm cursor-pointer transition-colors"
+          class="bg-transparent text-white font-bold w-full text-3xl cursor-pointer transition-colors"
           type="text"
           v-model="boardItem.baslik"
           @input="updatePageTitle"
@@ -11,11 +11,10 @@
         />
       </div>
     </nav>
-
-    <div class="flex flex-wrap">
+    <div class="flex overflow-x-auto">
       <DxSortable
         :data="panoList"
-        class="flex flex-wrap"
+        class="flex overflow-x-auto w-full"
         item-orientation="horizontal"
         group="tasksGroup"
         @drag-start="onTaskDragStart($event)"
@@ -23,19 +22,18 @@
         @add="onTaskDrop($event)"
       >
         <div
-          class="bg-white max-h-96 h-min overflow-y-auto m-3 p-2 rounded-md w-[300px] border-solid border-2 border-black"
+          class="bg-white max-h-96 h-min m-3 p-2 rounded-md w-96 max-w-sm overflow-y-scroll border-solid border-2 border-black"
           v-for="(item, index) in panoList"
           :key="index"
         >
           <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
-
           <DxSortable
             :data="item.kartItems"
             class="sortable-cards"
             group="tasksGroup"
             @drag-start="onTaskDragStart($event)"
             @reorder="onTaskDropKart($event)"
-            @add="onTaskDrop($event)"
+            @add="onTaskDropKart($event)"
           >
             <div
               class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
@@ -58,7 +56,7 @@
           </div>
         </div>
       </DxSortable>
-      <div class="block place-items-end mt-auto ml-6 pt-6">
+      <div class="block mt-auto ml-6 pt-6">
         <input class="eklelistinput" v-model="listeAdi" type="text" />
         <button @click="ekleListe" class="font-bold bg-slate-500 ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
       </div>
@@ -99,7 +97,8 @@ export default defineComponent({
       listItemId: '',
     });
     const isModalOpen = ref(false);
-    const yeniKartAdi = ref('');
+    // const yeniKartAdi = ref('');
+    // const newList = panoList.value.find((list) => list.id === e.toData[0].listItemId);
 
     interface kartAdi {
       kartItems: { baslik: string }[];
@@ -109,21 +108,24 @@ export default defineComponent({
       console.log('Kart Adı:', this.yeniKartAdi);
     };
 
-    onMounted(() => {
-      axios.get('https://localhost:44355/api/app/pano-app-services').then((response2) => {
-        boardList.value = response2.data || [];
-      });
-
+    const listeGetir = () => {
       axios
         .get('https://localhost:44355/api/app/list-app-services')
         .then((response) => {
-          console.log(response.data);
           panoList.value = response.data || [];
           console.log('panoList :>> ', panoList.value);
         })
         .catch((error) => {
           console.error('Veri çekme hatası:', error);
         });
+    };
+
+    onMounted(() => {
+      axios.get('https://localhost:44355/api/app/pano-app-services').then((response2) => {
+        boardList.value = response2.data || [];
+      });
+
+      listeGetir();
     });
 
     const ekleListe = () => {
@@ -145,10 +147,36 @@ export default defineComponent({
       } else {
         alert('Liste adı boş olamaz.');
       }
+      setTimeout(() => {
+        listeGetir();
+      }, 500);
     };
 
     const logBaslik = (baslik: any) => {
       console.log('Tıklanan Başlık:', baslik);
+    };
+
+    const moveCardToList = (card: any, newList: any) => {
+      // Eski listeden kartı kaldır
+      const oldList = panoList.value.find((list) => list.id === card.listItemId);
+      oldList.kartItems = oldList.kartItems.filter((item: any) => item.id !== card.id);
+
+      // Yeni liste içine kartı ekle
+      const newListItem = panoList.value.find((list) => list.id === newList.id);
+      newListItem.kartItems.push(card);
+
+      // Sunucuya güncelleme isteği gönder
+      axios
+        .put(`https://localhost:44355/api/app/kart-item-detay-app-services/${card.id}`, {
+          //https://localhost:44355/api/app/list-app-services/3a0e0778-7bab-9914-c43d-1312b018bac1/position?newPosition=2
+          listItemId: newList.id,
+        })
+        .then((response) => {
+          // Başarıyla güncellendi
+        })
+        .catch((error) => {
+          console.error('Kartı taşırken hata:', error);
+        });
     };
 
     const ekleKart = (id: any, yeniKartAdi: any) => {
@@ -163,6 +191,10 @@ export default defineComponent({
         .catch((error) => {
           console.error('Veri post edilirken hata oluştu:', error);
         });
+
+      setTimeout(() => {
+        listeGetir();
+      }, 500);
     };
 
     return {
@@ -171,6 +203,7 @@ export default defineComponent({
       logBaslik,
       pageTitle: '',
       ekleListe,
+      listeGetir,
       listIndex,
       ekleKart,
       listeAdi,
@@ -179,6 +212,7 @@ export default defineComponent({
       kart,
       isModalOpen,
       editedCard,
+      moveCardToList,
     };
   },
 
@@ -204,13 +238,16 @@ export default defineComponent({
     saveCardChanges(updatedCard: any) {
       console.log('Updated Card:', updatedCard);
     },
+
     onListReorder(e: any) {
       const list = this.panoList.splice(e.fromIndex, 1)[0];
       this.panoList.splice(e.toIndex, 0, list);
     },
+
     onTaskDragStart(e: any) {
       e.itemData = e.fromData[e.fromIndex];
     },
+
     onTaskDrop(e: any) {
       e.fromData.splice(e.fromIndex, 1);
       e.toData.splice(e.toIndex, 0, e.itemData);
@@ -227,18 +264,38 @@ export default defineComponent({
         .catch((error) => {
           console.error('List pozisyonu güncellenirken hata oluştu:', error);
         });
+      setTimeout(() => {
+        this.listeGetir();
+      }, 500);
     },
 
     onTaskDropKart(e: any) {
+      console.log('e :>> ', e);
+
       e.fromData.splice(e.fromIndex, 1);
       e.toData.splice(e.toIndex, 0, e.itemData);
       const cartId = e.itemData.id;
       const newPosition = e.toIndex + 1;
+      const newList = this.panoList.find((list) => list.id === e.toData[0].listItemId);
 
       console.log('Kart pozisyonu güncellendi:', e.itemData.id);
-
+      /*
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "listItemId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "baslik": "string",
+  "description": "string",
+  "kartPosition": 0
+}
+*/
       axios
-        .put(`https://localhost:44355/api/app/kart-item-detay-app-services/${cartId}/position?newPosition=${newPosition}`)
+        .put(`https://localhost:44355/api/app/kart-item-detay-app-services/${cartId}`, {
+          listItemId: newList.id,
+          kartPosition: newPosition,
+          baslik: e.itemData.baslik,
+          description: e.itemData.description,
+        })
+        //https://localhost:44355/api/app/list-app-services/3a0e0778-7bab-9914-c43d-1312b018bac1/position?newPosition=6
         .then((response) => {
           console.log('Kart pozisyonu başarıyla güncellendi:', response.data);
 
@@ -265,6 +322,9 @@ export default defineComponent({
         .catch((error) => {
           console.error('Kart pozisyonunu güncelleme hatası:', error);
         });
+      setTimeout(() => {
+        this.listeGetir();
+      }, 1000);
     },
 
     onListReorderKart(e: any) {
@@ -314,11 +374,6 @@ export default defineComponent({
   cursor: pointer;
 }
 
-.scrollable-list {
-  height: 400px;
-  width: 260px;
-}
-
 .card {
   position: absolute;
   background-color: white;
@@ -364,25 +419,25 @@ export default defineComponent({
 }
 
 .dx-sortable {
-  display: block;
 }
-/* width */
-::-webkit-scrollbar {
+.scrollable-board {
+  white-space: nowrap; /* Prevent content from wrapping */
+}
+
+/* Customize the scrollbar styles if needed */
+.scrollable-board::-webkit-scrollbar {
   width: 10px;
 }
 
-/* Track */
-::-webkit-scrollbar-track {
+.scrollable-board::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-/* Handle */
-::-webkit-scrollbar-thumb {
+.scrollable-board::-webkit-scrollbar-thumb {
   background: #888;
 }
 
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
+.scrollable-board::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 .navbar-title {
@@ -402,9 +457,6 @@ export default defineComponent({
 }
 
 .board {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
   gap: 5px;
 }
 
@@ -438,22 +490,22 @@ export default defineComponent({
 }
 
 body {
-  background-image: url('arkaplan.jpg');
+  background-image: url(arkaplan.jpg);
 }
-
+/*
 .baslikinput {
-  margin-top: 2px;
+  margin-top: 10px;
   width: 222px;
   border: none;
   outline: none;
-  background-color: transparent;
+  background-color: black;
   height: 20px;
-  padding: 3px;
-  border-radius: 3px;
+  padding: 10px;
+  border-radius: 10px;
   align-items: flex-start;
   cursor: pointer;
   transition: background-color 1s ease;
-  font-size: 20px;
+  font-size: 50px;
 }
 
 .eklelistinput {
@@ -468,7 +520,7 @@ body {
   align-items: flex-start;
   cursor: pointer;
   transition: background-color 1s ease;
-}
+} */
 
 input[type='text'] {
   margin-top: 2px;
@@ -485,7 +537,6 @@ input[type='text'] {
 input[type='text']:hover {
   background-color: rgba(240, 240, 240, 1);
 }
-
 .ekle-button-container {
   position: sticky;
   top: 0;
@@ -525,6 +576,9 @@ input[type='text']:hover {
   border: center;
   border-radius: 5px;
   cursor: pointer;
+}
+.dx-sortable {
+  display: block;
 }
 
 .ekle-board:hover {
