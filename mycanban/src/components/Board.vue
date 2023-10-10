@@ -322,9 +322,6 @@ export default defineComponent({
         .catch((error) => {
           console.error('Kart pozisyonunu güncelleme hatası:', error);
         });
-      setTimeout(() => {
-        this.listeGetir();
-      }, 1000);
     },
 
     onListReorderKart(e: any) {
