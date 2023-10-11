@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <nav class="p-5">
+  <div class="h-full w-full overflow-y-hidden">
+    <nav class="p-5 h-[64px]">
       <div v-for="boardItem in boardList" :key="boardItem.id">
         <input
           class="bg-transparent text-white font-bold w-full text-3xl cursor-pointer transition-colors"
@@ -11,55 +11,64 @@
         />
       </div>
     </nav>
-    <div class="flex overflow-x-auto">
-      <DxSortable
-        :data="panoList"
-        class="flex overflow-x-auto w-full"
-        item-orientation="horizontal"
-        group="tasksGroup"
-        @drag-start="onTaskDragStart($event)"
-        @reorder="onTaskDrop($event)"
-        @add="onTaskDrop($event)"
-      >
-        <div
-          class="bg-white max-h-96 h-min m-3 p-2 rounded-md w-96 max-w-sm overflow-y-scroll border-solid border-2 border-black"
-          v-for="(item, index) in panoList"
-          :key="index"
-        >
-          <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
-          <DxSortable
-            :data="item.kartItems"
-            class="sortable-cards"
-            group="tasksGroup"
-            @drag-start="onTaskDragStart($event)"
-            @reorder="onTaskDropKart($event)"
-            @add="onTaskDropKart($event)"
-          >
-            <div
-              class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
-              v-for="(cardItem, cardIndex) in item.kartItems"
-              :key="cardIndex"
-              @click="openModal(cardItem)"
-            >
-              {{ cardItem.baslik }}
-            </div>
-          </DxSortable>
 
-          <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
-            <input v-model="panoList[index].yeniKartAdi" type="text" class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-white" />
-            <button
-              @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
-              class="bg-blue-400 font-bold text-black mt-1 p-1 mr-auto cursor-pointer hover:bg-slate-300"
-            >
-              Kart Ekle
-            </button>
+    <div class="flex overflow-x-auto h-[calc(100vh-64px)] overflow-y-hidden">
+      <DxScrollView class="scrollable-board" direction="horizontal" show-scrollbar="none">
+        <DxSortable
+          :data="panoList"
+          class="flex overflow-x-auto w-full"
+          item-orientation="horizontal"
+          group="tasksGroup"
+          @drag-start="onTaskDragStart($event)"
+          @reorder="onTaskDrop($event)"
+          @add="onTaskDrop($event)"
+        >
+          <div
+            class="bg-white p-[8px 8px 4px 12px] max-w-xl h-min m-3 p-2 rounded-md w-96 overflow-y-scroll border-solid border-2 border-black"
+            v-for="(item, index) in panoList"
+            :key="index"
+          >
+            <h3 @click="logBaslik(item.listBaslik)" class="text-black text-xl font-bold">{{ item.listBaslik }}</h3>
+            <DxScrollView class="scrollable-list" show-scrollbar="always">
+              <DxSortable
+                :data="item.kartItems"
+                class="sortable-cards"
+                group="tasksGroup"
+                @drag-start="onTaskDragStart($event)"
+                @reorder="onTaskDropKart($event)"
+                @add="onTaskDropKart($event)"
+              >
+                <div
+                  class="mt-2 p-1 bg-slate-200 text-black shadow-sm rounded-lg transition-colors hover:bg-gray-300"
+                  v-for="(cardItem, cardIndex) in item.kartItems"
+                  :key="cardIndex"
+                  @click="openModal(cardItem)"
+                >
+                  {{ cardItem.baslik }}
+                </div>
+              </DxSortable>
+            </DxScrollView>
+
+            <div class="block place-items-start mt-2 ml-3 rounded-3xl kart-ekle-container">
+              <input
+                v-model="panoList[index].yeniKartAdi"
+                type="text"
+                class="bg-gray-400 w-max text-black p-full border rounded-lg hover:bg-slate-50"
+              />
+              <button
+                @click="ekleKart(item.id, panoList[index].yeniKartAdi)"
+                class="bg-green-500 font-bold text-black mt-1 p-1 mr-auto cursor-pointer hover:bg-slate-300"
+              >
+                Kart Ekle
+              </button>
+            </div>
           </div>
+        </DxSortable>
+        <div class="block mt-auto ml-6 pt-6 overflow-y-hidden">
+          <input class="eklelistinput" v-model="listeAdi" type="text" />
+          <button @click="ekleListe" class="bg-green-500 font-bold ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
         </div>
-      </DxSortable>
-      <div class="block mt-auto ml-6 pt-6">
-        <input class="eklelistinput" v-model="listeAdi" type="text" />
-        <button @click="ekleListe" class="font-bold bg-slate-500 ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
-      </div>
+      </DxScrollView>
     </div>
   </div>
 
@@ -172,6 +181,7 @@ export default defineComponent({
           listItemId: newList.id,
         })
         .then((response) => {
+          console.log('card, response :>> ', card, response);
           // Başarıyla güncellendi
         })
         .catch((error) => {
@@ -246,6 +256,11 @@ export default defineComponent({
 
     onTaskDragStart(e: any) {
       e.itemData = e.fromData[e.fromIndex];
+
+      const scrollContainer = document.querySelector('.flex.overflow-x-auto');
+      if (scrollContainer) {
+        scrollContainer.scrollLeft += 100; // Sayfanın sağa kaymasını ayarlayabilirsiniz
+      }
     },
 
     onTaskDrop(e: any) {
@@ -417,13 +432,15 @@ export default defineComponent({
 
 .dx-sortable {
 }
+
 .scrollable-board {
-  white-space: nowrap; /* Prevent content from wrapping */
+  white-space: nowrap;
+  scroll-behavior: smooth; /* Daha düzgün kaydırma efekti */
+  transition: transform 0.2s ease;
 }
 
-/* Customize the scrollbar styles if needed */
 .scrollable-board::-webkit-scrollbar {
-  width: 10px;
+  width: 200px;
 }
 
 .scrollable-board::-webkit-scrollbar-track {
@@ -521,11 +538,13 @@ body {
 
 input[type='text'] {
   margin-top: 2px;
-  width: 260px;
-  margin-left: -15px;
+  width: auto;
+  /* margin-right: auto; */
+  /* margin-right: px; */
   height: 20px;
-  padding: 3px;
-  border-radius: 3px;
+  width: 330px;
+  padding: 12px;
+  border-radius: 5px;
   align-items: flex-start;
   cursor: pointer;
   transition: background-color 1s ease;
@@ -544,7 +563,7 @@ input[type='text']:hover {
 }
 
 .ekle-button {
-  background-color: #ccc8e093;
+  background-color: #2a00fc93;
   margin-left: -10px;
   margin-top: 5px;
   padding: 5px 20px;
@@ -553,7 +572,7 @@ input[type='text']:hover {
 }
 
 .ekle-button:hover {
-  background-color: #0056b3;
+  background-color: #727579;
 }
 
 .ekle-board-container {
@@ -566,7 +585,7 @@ input[type='text']:hover {
 }
 
 .ekle-board {
-  background-color: #ccc8e093;
+  background-color: #2b00ff93;
   color: #fff;
   margin-right: 10 px;
   padding: 5px 4px;
@@ -579,6 +598,6 @@ input[type='text']:hover {
 }
 
 .ekle-board:hover {
-  background-color: #0056b3;
+  background-color: #3f90e7;
 }
 </style>
