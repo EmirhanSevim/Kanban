@@ -34,7 +34,7 @@
                 :data="item.kartItems"
                 class="sortable-cards"
                 group="tasksGroup"
-                @drag-start="onTaskDragStart($event)"
+                @drag-start="onTaskDragStartKart($event)"
                 @reorder="onTaskDropKart($event)"
                 @add="onTaskDropKart($event)"
               >
@@ -78,6 +78,7 @@
 <script lang="ts">
 import { ref, onMounted, defineComponent } from 'vue';
 import axios from 'axios';
+
 import CardModal from './CardModal.vue';
 import { DxScrollView } from 'devextreme-vue/scroll-view';
 import { DxSortable } from 'devextreme-vue/sortable';
@@ -284,6 +285,10 @@ export default defineComponent({
       }, 500);
     },
 
+    onTaskDragStartKart(e: any) {
+      e.itemData = e.fromData[e.fromIndex];
+    },
+
     onTaskDropKart(e: any) {
       console.log('e :>> ', e);
 
@@ -315,7 +320,7 @@ export default defineComponent({
           console.log('Kart pozisyonu başarıyla güncellendi:', response.data);
 
           // Yeni pozisyon hesaplaması için bir dizi oluştur
-          const updatedPositions = e.toData.map((item, index) => ({
+          const updatedPositions = e.toData.map((item: any, index: any) => ({
             id: item.id,
             newPosition: index + 1,
           }));
@@ -340,8 +345,12 @@ export default defineComponent({
     },
 
     onListReorderKart(e: any) {
-      const kart = this.panoList.splice(e.fromIndex.position + 1)[0];
-      this.panoList.splice(e.toIndex, 1, kart);
+      // Kartı kaynaktan (kaynak listesi) al
+      const kart = this.panoList.splice(e.fromIndex, 1)[0];
+
+      // Kartı hedefe (hedef listesi) ekleyin
+      const hedefList = this.newList; // Boş kart listesi olarak adlandırılan bir değişken kullanıyoruz
+      hedefList.push(kart);
     },
 
     getPriorityClass(task: any) {
