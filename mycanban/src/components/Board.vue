@@ -43,6 +43,7 @@
                   v-for="(cardItem, cardIndex) in item.kartItems"
                   :key="cardIndex"
                   @click="openModal(cardItem)"
+                  :class="{ 'hidden-card': cardItem && cardItem.isHidden }"
                 >
                   {{ cardItem.baslik }}
                 </div>
@@ -64,9 +65,12 @@
             </div>
           </div>
         </DxSortable>
-        <div class="block mt-auto ml-6 pt-6 overflow-y-hidden">
-          <input class="eklelistinput" v-model="listeAdi" type="text" />
-          <button @click="ekleListe" class="bg-green-500 font-bold ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
+        <div class="block mt-auto pt-6 overflow-y-hidden">
+          <div class="text-right">
+            <!-- Sağa yaslamak için "text-right" sınıfını kullanıyoruz -->
+            <input class="eklelistinput place-items-end" v-model="listeAdi" type="text" />
+            <button @click="ekleListe" class="bg-green-500 font-bold ml-1 p-1 content-center rounded-md cursor-pointer">+ Başka liste ekleyin</button>
+          </div>
         </div>
       </DxScrollView>
     </div>
@@ -118,6 +122,14 @@ export default defineComponent({
       console.log('Kart Adı:', this.yeniKartAdi);
     };
 
+    const isEmptyList = (panoList: any) => {
+      if (panoList.kartItems.length == 0) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
     const listeGetir = () => {
       axios
         .get('https://localhost:44355/api/app/list-app-services')
@@ -131,6 +143,9 @@ export default defineComponent({
     };
 
     onMounted(() => {
+      if (kart.position << 2) {
+      }
+
       axios.get('https://localhost:44355/api/app/pano-app-services').then((response2) => {
         boardList.value = response2.data || [];
       });
@@ -224,6 +239,7 @@ export default defineComponent({
       isModalOpen,
       editedCard,
       moveCardToList,
+      isEmptyList,
     };
   },
 
@@ -367,6 +383,10 @@ export default defineComponent({
 </script>
 
 <style>
+.hidden-card {
+  visibility: hidden;
+}
+
 .block.place-items-start {
   display: flex;
   flex-direction: column;
